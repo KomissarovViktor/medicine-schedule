@@ -1,6 +1,7 @@
 package org.komissarov;
 import org.komissarov.models.Medicine;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -14,7 +15,7 @@ public class Menu {
         do {
             System.out.println("1. Вивести графік прийому ліків");
             System.out.println("2. Добавити препарат до графіку");
-            System.out.println("3. ......");
+            System.out.println("3. Вивести список всіх ваших препаратів");
             System.out.println("0. Вихід");
             System.out.print("Виберіть пункт меню: ");
             choice = scanner.nextInt();
@@ -30,7 +31,8 @@ public class Menu {
                     break;
                 case 3:
                     // Обробка вибору пункту 3
-                    System.out.println("Ви вибрали пункт 3");
+                    showAllMedicines();
+
                     break;
                 case 0:
                     // Вихід з циклу
@@ -47,10 +49,18 @@ public class Menu {
 
     public void showScheduleOnDate() {
         System.out.println("\nВведіть дату початку терапії: \nДень: ");
-        int day = scanner.nextInt();
-        System.out.println("Місяць: ");
-        int month = scanner.nextInt();
-        List<Medicine> medicinesList = schedule.getScheduleOnDate(LocalDate.of(2023, month, day));
+        int day,month;
+        List<Medicine> medicinesList;
+        try{
+            day = scanner.nextInt();
+            System.out.println("Місяць: ");
+            month = scanner.nextInt();
+            medicinesList = schedule.getScheduleOnDate(LocalDate.of(2023, month, day));
+        }
+        catch (Exception exception) {
+            System.out.println("Ви ввели не правильну дату");
+            return;
+        }
         if (medicinesList==null)
         {
             System.out.println("Немає графіку на цю дату");
@@ -76,7 +86,7 @@ public class Menu {
         switch (choice)
         {
             case 1:
-                showAdditionalMenuForSchedule(medicinesList);
+                showAdditionalMenuForSchedule(medicinesList,LocalDate.of(2023, month, day));
                 break;
             case 2:
                 schedule.deleteScheduleByDate(LocalDate.of(2023, month, day));
@@ -98,33 +108,58 @@ public class Menu {
         LocalTime[] times= new LocalTime[takesPerDay];
         for (int i=0; i < takesPerDay; i++)
         {
-            System.out.println("Введіть час для "+(i+1)+"-го прийому:\nГодина: ");
-            int hour = scanner.nextInt();
-            System.out.println("Хвилина: ");
-            int minute = scanner.nextInt();
-            times[i]=LocalTime.of(hour,minute);
+            System.out.println("Введіть час для "+(i+1)+"-го прийому:");
+            try {
+                System.out.println("Година: ");
+                int hour = scanner.nextInt();
+                System.out.println("Хвилина: ");
+                int minute = scanner.nextInt();
+                times[i]=LocalTime.of(hour,minute);
+            }
+            catch(Exception exception){
+                System.out.println("\nВи ввели не правильний час. Спробуйте ще раз.\n");
+                --i;
+                scanner.nextLine();
+            }
         }
-
-        System.out.println("\nВведіть дату початку терапії: \nДень: ");
-        int day = scanner.nextInt();
-        System.out.println("Місяць: ");
-        int month = scanner.nextInt();
-
-        LocalDate startDate = LocalDate.of(2023,month,day);
-        LocalDate endDate;
+        boolean isValid=false;
+        LocalDate startDate=null,endDate=null;
+        while(!isValid)
+        {
+            try {
+                System.out.println("\nВведіть дату початку терапії: \nДень: ");
+                int day = scanner.nextInt();
+                System.out.println("Місяць: ");
+                int month = scanner.nextInt();
+                startDate  = LocalDate.of(2023,month,day);
+                isValid=true;
+            }
+            catch (Exception exception){
+                System.out.println("\nВи ввели неправильну дату. Спробуйте ще раз.\n");
+                scanner.nextLine();
+            }
+        }
+        isValid=false;
         do
         {
-            System.out.println("\nВведіть дату кінця терапії: \nДень: ");
-            day = scanner.nextInt();
-            System.out.println("Місяць: ");
-            month = scanner.nextInt();
-
-            endDate = LocalDate.of(2023,month,day);
-            if (endDate.isBefore(startDate))
-            {
-                System.out.println("\nВи ввели неправильну дату кінця терапії, введіть ще раз.");
+            try{
+                System.out.println("\nВведіть дату кінця терапії: \nДень: ");
+                int day = scanner.nextInt();
+                System.out.println("Місяць: ");
+                int month = scanner.nextInt();
+                endDate = LocalDate.of(2023,month,day);
+                isValid=true;
+                if (endDate.isBefore(startDate))
+                {
+                    System.out.println("\nВи ввели дату кінця терапії, яка передує даті початку. Введіть ще раз.");
+                    isValid=false;
+                }
             }
-        }while(endDate.isBefore(startDate));
+            catch (Exception exception){
+                System.out.println("\nВи ввели неправильний формат дати кінця терапії. Введіть ще раз.");
+                scanner.nextLine();
+            }
+        }while(!isValid);
 
         System.out.println("Введіть кількість наявного препарату: ");
 
@@ -135,7 +170,7 @@ public class Menu {
             schedule.addMedicineToSchedule(new Medicine(name, startDate, dosagePerOneTake, takesPerDay, times[i], endDate, quantity));
         }
     }
-    public void showAdditionalMenuForSchedule(List<Medicine> medicinesList)
+    public void showAdditionalMenuForSchedule(List<Medicine> medicinesList,LocalDate localDate)
     {
         System.out.println("Введіть номер препарату, який ви хочете редагувати: ");
         int index = scanner.nextInt();
@@ -173,11 +208,28 @@ public class Menu {
                     break;
                 case 5:
                     medicinesList.remove(index - 1);
+                    if (medicinesList.isEmpty())
+                    {
+                        schedule.deleteScheduleByDate(localDate);
+                    }
                     break;
                 default:
                     System.out.println("Невірний вибір. Спробуйте ще раз.");
                     break;
             }
-        }while (choice != 0 || choice != 5);
+        }while (choice != 0 && choice != 5);
+    }
+    public void showAllMedicines()
+    {
+        List<Medicine> medicineList = schedule.getAllMedicines();
+        System.out.println("Ваші препарати:\n");
+        int i = 1;
+        for (Medicine item : medicineList) {
+
+            System.out.println("Препарат " + i + ":");
+            System.out.println("Назва:" + item.getName());
+            System.out.println("Кількість наявних таблеток: " + item.getAvailableQuantity() + "\n");
+            ++i;
+        }
     }
 }

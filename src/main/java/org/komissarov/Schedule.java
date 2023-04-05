@@ -8,11 +8,20 @@ import java.util.stream.Collectors;
 
 public class Schedule {
     private Map<LocalDate, List<Medicine>> schedule = new HashMap<LocalDate, List<Medicine>>();
-
+    private List<Medicine> medicinesList = new ArrayList<>();
     public void addMedicineToSchedule(Medicine medicine)
     {
         LocalDate tempDate = medicine.getStartDate();
-
+        if (medicinesList.isEmpty())
+        {
+            medicinesList.add(medicine);
+        }
+        for (Medicine m : medicinesList) {
+            if (medicine.getName().equals(m.getName())) {
+                continue;
+            }
+            medicinesList.add(medicine);
+        }
         while (tempDate.isBefore(medicine.getEndDate()) || tempDate.isEqual(medicine.getEndDate()))
         {
             List<Medicine> tempList = schedule.get(tempDate);
@@ -38,5 +47,8 @@ public class Schedule {
         schedule.forEach((key, medicinesList) -> {
             medicinesList.removeIf(medicine -> medicine.getName()==name);
         });
+    }
+    public List<Medicine> getAllMedicines(){
+        return medicinesList;
     }
 }
