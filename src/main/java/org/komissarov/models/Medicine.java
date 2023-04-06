@@ -11,12 +11,13 @@ import java.util.Date;
 @Setter
 @Getter
 public class Medicine {
+    private int id;
     private String name;
     private LocalDate startDate;
+    private LocalDate endDate;
     private int dosagePerOneTake;
     private int takesPerDay;
     private LocalTime time;
-    private LocalDate endDate;
     private int availableQuantity;
     private ConsumeState state = ConsumeState.PLANNED;
 
@@ -28,5 +29,17 @@ public class Medicine {
         this.time = time;
         this.endDate = endDate;
         this.availableQuantity = availableQuantity;
+    }
+
+    public Medicine(int id, String name, LocalDate startDate, LocalDate endDate, int dosagePerOneTake, int takesPerDay, LocalTime time, int availableQuantity, ConsumeState state) {
+        this.id = id;
+        this.name = name;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.dosagePerOneTake = dosagePerOneTake;
+        this.takesPerDay = takesPerDay;
+        this.time = time;
+        this.availableQuantity = availableQuantity;
+        this.state = state;
     }
 }

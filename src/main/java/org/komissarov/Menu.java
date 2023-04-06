@@ -4,22 +4,52 @@ import org.komissarov.models.Medicine;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Scanner;
 public class Menu {
     Schedule schedule = new Schedule();
     Scanner scanner = new Scanner(System.in);
 
+    public boolean countTime(){
+        List<Medicine> tempList = schedule.getScheduleOnDate(LocalDate.now());
+        boolean isTimeToTake=false;
+        if (tempList!=null){
+            for (Medicine medicine:tempList) {
+                LocalTime currentTime = LocalTime.now();
+                LocalTime startPeriod = medicine.getTime().minus(10,ChronoUnit.MINUTES);
+                LocalTime endPeriod = medicine.getTime().plus(10,ChronoUnit.MINUTES);
+                if (medicine.getState()==ConsumeState.PLANNED) {
+                    if (currentTime.isAfter(startPeriod)&&currentTime.isBefore(endPeriod)) {
+                        System.out.println("Назва: "+medicine.getName());
+                        System.out.println("Таблеток: "+medicine.getDosagePerOneTake());
+                        System.out.println("Час: "+medicine.getTime());
+                        System.out.println();
+                        isTimeToTake=true;
+                    }
+                }
+            }
+        }
+        return isTimeToTake;
+    }
+    public void startMenu(){
+        showMainMenu();
+    }
     public void showMainMenu() {
         int choice;
         do {
+            System.out.println("Препарати, які вам потрібно прийняти зараз:");
+            boolean isTimeToTake=countTime();
+
             System.out.println("1. Вивести графік прийому ліків");
             System.out.println("2. Добавити препарат до графіку");
             System.out.println("3. Вивести список всіх ваших препаратів");
             System.out.println("0. Вихід");
+            if (isTimeToTake){
+                System.out.println("Введіть 111, щоб підтвердити прийняття: ");
+            }
             System.out.print("Виберіть пункт меню: ");
             choice = scanner.nextInt();
-
             switch (choice) {
                 case 1:
                     // Обробка вибору пункту 1
@@ -32,7 +62,10 @@ public class Menu {
                 case 3:
                     // Обробка вибору пункту 3
                     showAllMedicines();
-
+                    break;
+                case 111:
+                    // Обробка вибору 111
+                    schedule.confirmTaking();
                     break;
                 case 0:
                     // Вихід з циклу
@@ -189,10 +222,11 @@ public class Menu {
                 case 1:
                     System.out.println("Введіть назву: ");
                     tempMedicine.setName(scanner.next());
+                    schedule.updateMedicineName(tempMedicine.getId(),scanner.next());
                     break;
                 case 2:
                     System.out.println("Введіть дозу: ");
-                    tempMedicine.setDosagePerOneTake(scanner.nextInt());
+                    schedule.updateMedicineDosage(tempMedicine.getId(),scanner.nextInt());
                     break;
                 case 3:
                     System.out.println("Введіть час:\n");
@@ -200,18 +234,19 @@ public class Menu {
                     int hour = scanner.nextInt();
                     System.out.println("Хвилина: ");
                     int minute = scanner.nextInt();
-                    tempMedicine.setTime(LocalTime.of(hour, minute));
+                    schedule.updateMedicineTakeTime(tempMedicine.getId(),LocalTime.of(hour, minute));
                     break;
                 case 4:
                     System.out.println("Введіть кількість наявного препарату:");
-                    tempMedicine.setAvailableQuantity(scanner.nextInt());
+                    schedule.updateMedicineAvailableQuantity(tempMedicine.getId(),scanner.nextInt());
                     break;
                 case 5:
-                    medicinesList.remove(index - 1);
+                    schedule.deleteScheduleByMedicineId(medicinesList.get(index-1).getId());
                     if (medicinesList.isEmpty())
                     {
                         schedule.deleteScheduleByDate(localDate);
                     }
+                    schedule.deleteMedicineFromSchedule(medicinesList.get(index-1).getId());
                     break;
                 default:
                     System.out.println("Невірний вибір. Спробуйте ще раз.");
