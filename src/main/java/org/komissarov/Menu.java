@@ -49,7 +49,7 @@ public class Menu {
                 System.out.println("Введіть 111, щоб підтвердити прийняття: ");
             }
             System.out.print("Виберіть пункт меню: ");
-            choice = scanner.nextInt();
+            choice = Validator.readInt(scanner);
             switch (choice) {
                 case 1:
                     // Обробка вибору пункту 1
@@ -82,12 +82,11 @@ public class Menu {
 
     public void showScheduleOnDate() {
         System.out.println("\nВведіть дату початку терапії: \nДень: ");
-        int day,month;
         List<Medicine> medicinesList;
+        int day = Validator.readInt(scanner);
+        System.out.println("Місяць: ");
+        int month = Validator.readInt(scanner);
         try{
-            day = scanner.nextInt();
-            System.out.println("Місяць: ");
-            month = scanner.nextInt();
             medicinesList = schedule.getScheduleOnDate(LocalDate.of(2023, month, day));
         }
         catch (Exception exception) {
@@ -115,7 +114,7 @@ public class Menu {
         System.out.println("Щоб витерти графік введіть 2.");
         System.out.println("Інші варіанти - вихід");
         System.out.print("Виберіть пункт: ");
-        choice = scanner.nextInt();
+        choice = Validator.readInt(scanner);
         switch (choice)
         {
             case 1:
@@ -135,68 +134,69 @@ public class Menu {
         String name = scanner.next();
 
         System.out.println("Доза в таблетках за один прийом: ");
-        int dosagePerOneTake = scanner.nextInt();
+        int dosagePerOneTake = Validator.readInt(scanner);
         System.out.println("Кількість прийомів: ");
-        int takesPerDay = scanner.nextInt();
+        int takesPerDay = Validator.readInt(scanner);
         LocalTime[] times= new LocalTime[takesPerDay];
         for (int i=0; i < takesPerDay; i++)
         {
             System.out.println("Введіть час для "+(i+1)+"-го прийому:");
-            try {
+            int hour,minute;
+            do{
                 System.out.println("Година: ");
-                int hour = scanner.nextInt();
+                hour = Validator.readInt(scanner);
                 System.out.println("Хвилина: ");
-                int minute = scanner.nextInt();
-                times[i]=LocalTime.of(hour,minute);
-            }
-            catch(Exception exception){
-                System.out.println("\nВи ввели не правильний час. Спробуйте ще раз.\n");
-                --i;
-                scanner.nextLine();
-            }
+                minute = Validator.readInt(scanner);
+                if (!Validator.isTimeValid(hour,minute)){
+                    System.out.println("\nВи ввели не правильний час. Спробуйте ще раз.\n");
+                }
+                else{
+                    times[i]=LocalTime.of(hour,minute);
+                }
+            }while (!Validator.isTimeValid(hour,minute));
         }
-        boolean isValid=false;
+
         LocalDate startDate=null,endDate=null;
-        while(!isValid)
-        {
-            try {
-                System.out.println("\nВведіть дату початку терапії: \nДень: ");
-                int day = scanner.nextInt();
-                System.out.println("Місяць: ");
-                int month = scanner.nextInt();
-                startDate  = LocalDate.of(2023,month,day);
-                isValid=true;
-            }
-            catch (Exception exception){
+        int day,month;
+
+        do{
+            System.out.println("\nВведіть дату початку терапії: \nДень: ");
+            day = Validator.readInt(scanner);
+            System.out.println("Місяць: ");
+            month = Validator.readInt(scanner);
+            if (!Validator.isDateValid(2023,month,day)){
                 System.out.println("\nВи ввели неправильну дату. Спробуйте ще раз.\n");
-                scanner.nextLine();
             }
-        }
-        isValid=false;
+        }while (!Validator.isDateValid(2023,month,day));
+
+        startDate  = LocalDate.of(2023,month,day);
+
+        boolean isBefore=false;
         do
         {
-            try{
-                System.out.println("\nВведіть дату кінця терапії: \nДень: ");
-                int day = scanner.nextInt();
-                System.out.println("Місяць: ");
-                int month = scanner.nextInt();
+            System.out.println("\nВведіть дату кінця терапії: \nДень: ");
+            day = Validator.readInt(scanner);
+            System.out.println("Місяць: ");
+            month = Validator.readInt(scanner);
+            if (!Validator.isDateValid(2023,month,day))
+            {
+                System.out.println("\nВи ввели неправильний формат дати кінця терапії. Введіть ще раз.");
+            }
+            else{
                 endDate = LocalDate.of(2023,month,day);
-                isValid=true;
-                if (endDate.isBefore(startDate))
-                {
-                    System.out.println("\nВи ввели дату кінця терапії, яка передує даті початку. Введіть ще раз.");
-                    isValid=false;
+                if (endDate.isBefore(startDate)){
+                    isBefore=true;
+                    System.out.println("\nДата кінця терапії передує даті початку. Введіть ще раз.");
+                }
+                else{
+                    isBefore=false;
                 }
             }
-            catch (Exception exception){
-                System.out.println("\nВи ввели неправильний формат дати кінця терапії. Введіть ще раз.");
-                scanner.nextLine();
-            }
-        }while(!isValid);
+        }while(!Validator.isDateValid(2023,month,day) || isBefore);
 
         System.out.println("Введіть кількість наявного препарату: ");
 
-        int quantity = scanner.nextInt();
+        int quantity = Validator.readInt(scanner);
 
         for (int i=0; i < takesPerDay; i++)
         {
@@ -206,7 +206,7 @@ public class Menu {
     public void showAdditionalMenuForSchedule(List<Medicine> medicinesList,LocalDate localDate)
     {
         System.out.println("Введіть номер препарату, який ви хочете редагувати: ");
-        int index = scanner.nextInt();
+        int index = Validator.readInt(scanner);
         int choice;
         do {
             System.out.println("1. Редагувати назву");
@@ -216,7 +216,7 @@ public class Menu {
             System.out.println("5. Видалити препарат з графіку");
             System.out.println("0. Повернутися до головного меню");
             System.out.print("Виберіть пункт меню: ");
-            choice = scanner.nextInt();
+            choice = Validator.readInt(scanner);
             Medicine tempMedicine = medicinesList.get(index - 1);
             switch (choice) {
                 case 1:
@@ -226,19 +226,25 @@ public class Menu {
                     break;
                 case 2:
                     System.out.println("Введіть дозу: ");
-                    schedule.updateMedicineDosage(tempMedicine.getId(),scanner.nextInt());
+                    schedule.updateMedicineDosage(tempMedicine.getId(),Validator.readInt(scanner));
                     break;
                 case 3:
                     System.out.println("Введіть час:\n");
-                    System.out.println("Година: ");
-                    int hour = scanner.nextInt();
-                    System.out.println("Хвилина: ");
-                    int minute = scanner.nextInt();
+                    int hour,minute;
+                    do{
+                        System.out.println("Година: ");
+                        hour = Validator.readInt(scanner);
+                        System.out.println("Хвилина: ");
+                        minute = Validator.readInt(scanner);
+                        if (!Validator.isTimeValid(hour,minute)){
+                            System.out.println("\nВи ввели не правильний час. Спробуйте ще раз.\n");
+                        }
+                    }while (!Validator.isTimeValid(hour,minute));
                     schedule.updateMedicineTakeTime(tempMedicine.getId(),LocalTime.of(hour, minute));
                     break;
                 case 4:
                     System.out.println("Введіть кількість наявного препарату:");
-                    schedule.updateMedicineAvailableQuantity(tempMedicine.getId(),scanner.nextInt());
+                    schedule.updateMedicineAvailableQuantity(tempMedicine.getId(),Validator.readInt(scanner));
                     break;
                 case 5:
                     schedule.deleteScheduleByMedicineId(medicinesList.get(index-1).getId());
