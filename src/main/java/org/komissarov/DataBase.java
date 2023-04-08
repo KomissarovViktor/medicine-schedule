@@ -11,10 +11,9 @@ import java.time.LocalTime;
 
 public class DataBase {
 
-    private String jdbcURL = "jdbc:sqlite:medicineschedule.db";
     private Connection connection;
 
-    public DataBase() {
+    public DataBase(String jdbcURL) {
         try {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(jdbcURL);
@@ -34,6 +33,7 @@ public class DataBase {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public void insertNewMedicine(Medicine medicine) {
@@ -111,6 +111,14 @@ public class DataBase {
             e.printStackTrace();
         }
     }
+    public void updateMedicineAvailableQuantityByName(String name, int quantity){
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute("UPDATE medicines SET availableQuantity='"+quantity+"' WHERE name='"+name+"';");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public void updateMedicineState(int id, ConsumeState state){
         try {
             Statement statement = connection.createStatement();
@@ -170,6 +178,15 @@ public class DataBase {
         try {
             Statement statement = connection.createStatement();
             statement.execute("DELETE FROM schedules WHERE date = '"+localDate+"';");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void deleteAll(){
+        try {
+            Statement statement = connection.createStatement();
+            statement.execute("DELETE FROM medicines;");
+            statement.execute("DELETE FROM schedules;");
         } catch (Exception e) {
             e.printStackTrace();
         }

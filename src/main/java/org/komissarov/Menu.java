@@ -32,9 +32,6 @@ public class Menu {
         }
         return isTimeToTake;
     }
-    public void startMenu(){
-        showMainMenu();
-    }
     public void showMainMenu() {
         int choice;
         do {
@@ -104,7 +101,7 @@ public class Menu {
             System.out.println("Препарат " + i + ":");
             System.out.println("Назва:" + item.getName());
             System.out.println("Стан:" + item.getState());
-            System.out.println("Кількість таблеток: " + item.getDosagePerOneTake());
+            System.out.println("Кількість таблеток прийняти: " + item.getDosagePerOneTake());
             System.out.println("Час прийому: " + item.getTime());
             System.out.println("Кількість наявних таблеток: " + item.getAvailableQuantity() + "\n");
             ++i;

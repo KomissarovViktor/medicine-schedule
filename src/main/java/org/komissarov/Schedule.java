@@ -2,20 +2,16 @@ package org.komissarov;
 
 import org.komissarov.models.Medicine;
 
-import javax.xml.transform.Result;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.sql.Date;
-import java.util.stream.Collectors;
 
 public class Schedule {
-    private Map<LocalDate, List<Medicine>> schedule = new HashMap<LocalDate, List<Medicine>>();
+    private Map<LocalDate, List<Medicine>> schedules = new HashMap<LocalDate, List<Medicine>>();
     private List<Medicine> medicinesList = new ArrayList<>();
-    private DataBase db= new DataBase();
+    private DataBase db = new DataBase("jdbc:sqlite:medicineschedule.db");
 
     public Schedule() {
         regenerateSchedules();
@@ -23,7 +19,7 @@ public class Schedule {
     public void regenerateSchedules(){
         medicinesList.clear();
         medicinesList = getAllMedicines();
-        schedule.clear();
+        schedules.clear();
         ResultSet rs = db.getAllSchedules();
         if (rs!=null) {
             try {
@@ -32,12 +28,12 @@ public class Schedule {
                 {
                     LocalDate date=LocalDate.parse(rs.getString(2));
                     int medicineId = rs.getInt(3);
-                    tempList=schedule.get(date);
+                    tempList= schedules.get(date);
                     if (tempList == null){tempList = new ArrayList<Medicine>();}
                     Comparator<Medicine> byTime = Comparator.comparing(Medicine::getTime);
                     tempList.add(getMedicineById(medicineId));
                     tempList.sort(byTime);
-                    schedule.put(date,tempList);
+                    schedules.put(date,tempList);
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -59,7 +55,7 @@ public class Schedule {
     }
     public List<Medicine> getScheduleOnDate(LocalDate date)
     {
-        return schedule.get(date);
+        return schedules.get(date);
     }
     public void deleteScheduleByDate(LocalDate date)
     {
@@ -149,10 +145,20 @@ public class Schedule {
                 if (medicine.getState()==ConsumeState.PLANNED) {
                     if (currentTime.isAfter(startPeriod)&&currentTime.isBefore(endPeriod)) {
                         db.deleteScheduleByDateAndByMedicineId(LocalDate.now(),medicine.getId());
+                        int newQuantity =  medicine.getAvailableQuantity()- medicine.getDosagePerOneTake();
+                        if (newQuantity<0) newQuantity = 0;
+                        db.updateMedicineAvailableQuantityByName(medicine.getName(),newQuantity);
                         regenerateSchedules();
                     }
                 }
             }
         }
+    }
+    public void deleteAllSchedules(){
+        db.deleteAll();
+        regenerateSchedules();
+    }
+    public int getLastInsertId(){
+        return db.getLastInsertID();
     }
 }
